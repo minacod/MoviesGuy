@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Movies Guy</string>
+    <string name="details_movie_name">Movie Name</string>
+    <string name="movie_poster">movie poster</string>
+    <string name="date">Date</string>
+    <string name="rating">Rating</string>
+    <string name="overview">overview</string>
+    <string name="top_rated">Top Rated</string>
+    <string name="most_popular">Most Popular</string>
+    <string name="top_vote">/10</string>
+    <string name="movie">MOVIE</string>
+    <string name="check_internet">Check Your Internet Connection</string>
+    <string name="popular">POPULAR</string>
+    <string name="top">TOP</string>
+    <string name="error">Error Happened</string>
+    <string name="trailer">Trailer</string>
+    <string name="favorite">Favorite</string>
+    <string name="offline_refresh">No Internet Connection go online so you can refresh and see new movies</string>
+    <string name="movie_details">Movie Details</string>
+    <string name="trailers">Trailers</string>
+    <string name="reviews">Reviews</string>
+    <string name="you_don_t_have_any_favorite_movie">You Don\'t Have Any Favorite Movie</string>
+</resources>
