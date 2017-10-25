@@ -132,6 +132,8 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
     // saving instance
     //
 
+
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -164,8 +166,8 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
 
         else {
             if(!isConnected())
-            Toast.makeText(MainActivity.this, R.string.offline_refresh, Toast.LENGTH_SHORT).show();
-
+                Toast.makeText(MainActivity.this, R.string.offline_refresh, Toast.LENGTH_SHORT).show();
+            ifFavorite=true;
             LoaderManager moviesLoaderManager = getSupportLoaderManager();
             Loader movieaLoader = moviesLoaderManager.getLoader(FAV_MOVIES_LOADER_ID);
             if (movieaLoader == null)
@@ -185,13 +187,23 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         @Override
         public Loader<MovieDataUtils[]> onCreateLoader(int id, Bundle args) {
             return new AsyncTaskLoader<MovieDataUtils[]>(MainActivity.this) {
+                MovieDataUtils[] mMovies;
+
                 @Override
                 protected void onStartLoading() {
-                    mMoviesList.setVisibility(View.GONE);
-                    mMsg.setVisibility(View.GONE);
-                    mMainProgressBar.setVisibility(View.VISIBLE);
+                    if(ifFavorite){
+                        mMoviesList.setVisibility(View.GONE);
+                        mMsg.setVisibility(View.GONE);
+                        mMainProgressBar.setVisibility(View.VISIBLE);
+                        forceLoad();
+                    }
 
-                    forceLoad();
+                    else deliverResult(mMovies);
+                }
+
+                @Override
+                public void deliverResult(MovieDataUtils[] data) {
+                    super.deliverResult(data);
                 }
 
                 @Override
@@ -203,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
                             null,
                             null);
                     int limit = result.getCount();
-                    MovieDataUtils[] mMovies = new MovieDataUtils[limit];
+                    mMovies = new MovieDataUtils[limit];
                     for (int i = 0; i < limit; i++) {
                         result.moveToPosition(i);
                         String id = result.getString(result.getColumnIndex(MoviesContract.FavoritesEntry.COL_MOVIE_ID));
@@ -228,13 +240,13 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         public void onLoadFinished(Loader<MovieDataUtils[]> loader, MovieDataUtils[] data) {
 
             if(data.length!=0){
-            GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, 2, LinearLayoutManager.VERTICAL, false);
-            mMoviesList.setLayoutManager(layoutManager);
-            mMoviesListAdapter = new MoviesListAdapter(data, MainActivity.this);
-            mMoviesList.setAdapter(mMoviesListAdapter);
-            mMoviesList.setHasFixedSize(true);
-            mMainProgressBar.setVisibility(View.INVISIBLE);
-            mMoviesList.setVisibility(View.VISIBLE);}
+                GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, 2, LinearLayoutManager.VERTICAL, false);
+                mMoviesList.setLayoutManager(layoutManager);
+                mMoviesListAdapter = new MoviesListAdapter(data, MainActivity.this);
+                mMoviesList.setAdapter(mMoviesListAdapter);
+                mMoviesList.setHasFixedSize(true);
+                mMainProgressBar.setVisibility(View.INVISIBLE);
+                mMoviesList.setVisibility(View.VISIBLE);}
             else {
                 mMainProgressBar.setVisibility(View.INVISIBLE);
                 mMsg.setVisibility(View.VISIBLE);
