@@ -45,11 +45,14 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
     private String apiKey = BuildConfig.API_KEY;
     private SwipeRefreshLayout mRefreshLayout;
 
+    private MovieDataUtils [] mMovies;
     private static final String MOVIES_URL_BUNDLE_KEY = "url";
     private static final int MOVIES_LOADER_ID = 1;
     private static final int FAV_MOVIES_LOADER_ID = 5;
     private boolean hideProgress;
     private boolean ifFavorite;
+    private String sortOption;
+    private String lastOption;
 
     private GridLayoutManager layoutManager;
     private Parcelable state;
@@ -61,12 +64,15 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState != null){
+            mMovies= (MovieDataUtils[]) savedInstanceState.getParcelableArray(getString(R.string.movie));
             VIEWING_MODE = savedInstanceState.getString("mode");
             ifFavorite=savedInstanceState.getBoolean("chk");
             state=savedInstanceState.getParcelable("state");
+            lastOption=savedInstanceState.getString("op");
         }
         else
             VIEWING_MODE = getString(R.string.popular);
+        sortOption=VIEWING_MODE;
         mMoviesList = (RecyclerView) findViewById(R.id.rv_movies_list);
         mMainProgressBar = (ProgressBar) findViewById(R.id.pb_main_loading);
         mRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.sr_main);
@@ -108,21 +114,24 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         switch (itemId) {
             case R.id.action_Top: {
                 VIEWING_MODE = getApplicationContext().getString(R.string.top);
+                sortOption=VIEWING_MODE;
                 ifFavorite= false;
                 loadMovies();
                 break;
             }
             case R.id.action_Popular: {
                 VIEWING_MODE = getApplicationContext().getString(R.string.popular);
+                sortOption=VIEWING_MODE;
                 ifFavorite= false;
                 loadMovies();
                 break;
             }
             case R.id.fav: {
+                sortOption="FAV";
                 LoaderManager moviesLoaderManager = getSupportLoaderManager();
                 Loader movieaLoader = moviesLoaderManager.getLoader(FAV_MOVIES_LOADER_ID);
                 ifFavorite= true;
-                if (movieaLoader == null)
+                if (movieaLoader == null||sortOption!=lastOption)
                     getSupportLoaderManager().initLoader(FAV_MOVIES_LOADER_ID, null, favoriteLoader);
                 else
                     getSupportLoaderManager().restartLoader(FAV_MOVIES_LOADER_ID, null, favoriteLoader);
@@ -152,8 +161,10 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
 
         state = layoutManager.onSaveInstanceState();
         outState.putParcelable("state",state);
+        outState.putParcelableArray(getApplicationContext().getString(R.string.movie),mMovies);
         outState.putString("mode", VIEWING_MODE);
         outState.putBoolean("chk", ifFavorite);
+        outState.putString("op",sortOption);
     }
 
     //
@@ -202,7 +213,6 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         @Override
         public Loader<MovieDataUtils[]> onCreateLoader(int id, Bundle args) {
             return new AsyncTaskLoader<MovieDataUtils[]>(MainActivity.this) {
-                MovieDataUtils[] mMovies;
 
                 @Override
                 protected void onStartLoading() {
@@ -254,6 +264,8 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         @Override
         public void onLoadFinished(Loader<MovieDataUtils[]> loader, MovieDataUtils[] data) {
 
+            lastOption=sortOption;
+            mMovies=data;
             if(data.length!=0){
 
                 mMoviesList.setLayoutManager(layoutManager);
@@ -278,14 +290,14 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
     @Override
     public Loader<MovieDataUtils[]> onCreateLoader(int id, final Bundle args) {
         return new AsyncTaskLoader<MovieDataUtils[]>(this) {
-            MovieDataUtils[] mMovies;
+
 
             @Override
             protected void onStartLoading() {
                 if (args == null) {
                     return;
                 }
-                if (mMovies == null) {
+                if (mMovies == null||!(sortOption.equals(lastOption))) {
                     mMoviesList.setVisibility(View.INVISIBLE);
                     mMsg.setVisibility(View.GONE);
                     if (hideProgress)
@@ -333,6 +345,8 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
     @Override
     public void onLoadFinished(Loader<MovieDataUtils[]> loader, MovieDataUtils[] data) {
 
+        lastOption=sortOption;
+        mMovies=data;
         mMoviesList.setLayoutManager(layoutManager);
         mMoviesListAdapter = new MoviesListAdapter(data, MainActivity.this);
         mMoviesList.setAdapter(mMoviesListAdapter);
