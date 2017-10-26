@@ -1,6 +1,7 @@
 package com.example.shafy.moviesguy.utilities;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 
 import java.io.IOException;
@@ -93,6 +94,10 @@ public class NetworkUtils {
         }
     }
 
+    public static boolean isConnected(Context c) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+        return connectivityManager.getActiveNetworkInfo() != null;
+    }
 
 
 }

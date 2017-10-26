@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -50,14 +51,19 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
     private boolean hideProgress;
     private boolean ifFavorite;
 
+    private GridLayoutManager layoutManager;
+    private Parcelable state;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         if (savedInstanceState != null){
             VIEWING_MODE = savedInstanceState.getString("mode");
             ifFavorite=savedInstanceState.getBoolean("chk");
+            state=savedInstanceState.getParcelable("state");
         }
         else
             VIEWING_MODE = getString(R.string.popular);
@@ -66,6 +72,9 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         mRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.sr_main);
         mMsg =(TextView) findViewById(R.id.tv_msg);
         hideProgress = true;
+
+        layoutManager = new GridLayoutManager(MainActivity.this, 2, LinearLayoutManager.VERTICAL, false);
+
         mRefreshLayout.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
@@ -77,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
                 }
         );
         loadMovies();
+
 
     }
 
@@ -122,11 +132,13 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         return super.onOptionsItemSelected(item);
     }
 
-    private boolean isConnected() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        return connectivityManager.getActiveNetworkInfo() != null;
-    }
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        layoutManager.onRestoreInstanceState(state);
+    }
 
     //
     // saving instance
@@ -137,6 +149,9 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+
+        state = layoutManager.onSaveInstanceState();
+        outState.putParcelable("state",state);
         outState.putString("mode", VIEWING_MODE);
         outState.putBoolean("chk", ifFavorite);
     }
@@ -146,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
     //
 
     private void loadMovies() {
-        if (isConnected()&&!ifFavorite) {
+        if (NetworkUtils.isConnected(this)&&!ifFavorite) {
             NetworkUtils test = new NetworkUtils();
             URL url = NetworkUtils.buildUrl(VIEWING_MODE, apiKey);
             Bundle moviesLoaderBundle = new Bundle();
@@ -165,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         }
 
         else {
-            if(!isConnected())
+            if(!NetworkUtils.isConnected(this))
                 Toast.makeText(MainActivity.this, R.string.offline_refresh, Toast.LENGTH_SHORT).show();
             ifFavorite=true;
             LoaderManager moviesLoaderManager = getSupportLoaderManager();
@@ -240,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
         public void onLoadFinished(Loader<MovieDataUtils[]> loader, MovieDataUtils[] data) {
 
             if(data.length!=0){
-                GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, 2, LinearLayoutManager.VERTICAL, false);
+
                 mMoviesList.setLayoutManager(layoutManager);
                 mMoviesListAdapter = new MoviesListAdapter(data, MainActivity.this);
                 mMoviesList.setAdapter(mMoviesListAdapter);
@@ -317,7 +332,7 @@ public class MainActivity extends AppCompatActivity implements MoviesListAdapter
 
     @Override
     public void onLoadFinished(Loader<MovieDataUtils[]> loader, MovieDataUtils[] data) {
-        GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, 2, LinearLayoutManager.VERTICAL, false);
+
         mMoviesList.setLayoutManager(layoutManager);
         mMoviesListAdapter = new MoviesListAdapter(data, MainActivity.this);
         mMoviesList.setAdapter(mMoviesListAdapter);

@@ -22,6 +22,7 @@
             android:name=".DetailsActivity"
             android:label="@string/movie_details"
             android:launchMode="singleTop"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
